@@ -1,0 +1,37 @@
+.center {
+    text-align: center;
+}
+
+.board-container {
+    margin-top: 100px;
+}
+
+.board {
+    outline: 10px gray solid;
+    display: inline-block;
+}
+
+.row {
+    display: flex;
+}
+
+.square {
+    width: 60px;
+    height: 60px;
+}
+
+.piece {
+    margin-top: 7px;
+}
+
+.white {
+    background-color: white;
+}
+
+.gray {
+    background-color: gray;
+}
+
+.selected {
+    background-color: red;
+}
