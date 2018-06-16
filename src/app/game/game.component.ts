@@ -21,6 +21,15 @@ const PIECESETUP = [[Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook],
 [Pawn, Pawn, Pawn, Pawn, Pawn, Pawn, Pawn, Pawn],
 [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]];
 
+/*const PIECESETUP = [[ , , , Queen, King, , , ],
+[, , , , , , , ],
+[, , , , , , , ],
+[, , , , , , , ],
+[, , , , , , , ],
+[, , , , , , , ],
+[, , , , , , , ],
+[, , , Queen, King, , , ]];*/
+
 const SIDE = [Side.BLACK, Side.BLACK, , , , , Side.WHITE, Side.WHITE];
 
 @Component({
@@ -131,6 +140,11 @@ export class GameComponent implements OnInit {
         return true;
     }
 
+    isStalemate(): boolean {
+        // If not in check and no way to make a move doesn't put you in check it is a stalemate
+        return this.isCheckmate();
+    }
+
     unselectSquare(): void {
         // Unselect currently selected square
         this.selectedSquare = null;
@@ -164,6 +178,9 @@ export class GameComponent implements OnInit {
                     }
                     this.inCheck = true;
                 } else {
+                    if (this.isStalemate()) {
+                        this.message = 'Stalemate';
+                    }
                     this.inCheck = false;
                 }
                 this.unselectSquare();
