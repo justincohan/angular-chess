@@ -107,11 +107,12 @@ export abstract class Piece {
         return !targetSquare.piece || targetSquare.piece.side !== this.side;
     }
 
-    applyMove = (targetSquare: Square): void  => {
+    applyMove = (selectedSquare: Square, targetSquare: Square): void  => {
         // When move is confirmerd set some state variables
         this.game.enPassant.pawnSquare = null;
         this.game.enPassant.targetSquare = null;
         this.firstMove = false;
+        this.game.movePieceToTarget(selectedSquare, targetSquare);
     }
 
     isBlocked(square: Square, blockers: number[][]): boolean {

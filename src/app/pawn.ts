@@ -3,6 +3,7 @@ import { Side } from './piece';
 import { Square } from './square';
 import { GameComponent } from './game/game.component';
 import { Move } from './move';
+import { Queen } from './queen';
 
 
 export class Pawn extends Piece {
@@ -12,39 +13,53 @@ export class Pawn extends Piece {
         super(side, game);
         if (this.side === Side.BLACK) {
             this.possibleMoves = [new Move([1, 0], this.canMove, this.applyMove, [[1, 0]]),
-            new Move([1, 1], this.canTake, this.applyMove, []),
-            new Move([1, -1], this.canTake, this.applyMove, []),
+            new Move([1, 1], this.canTake, this.maybePromoteBlack, []),
+            new Move([1, -1], this.canTake, this.maybePromoteBlack, []),
             new Move([1, 1], this.canEnPassant, this.applyEnPassant, []),
             new Move([1, -1], this.canEnPassant, this.applyEnPassant, []),
             new Move([2, 0], this.canMoveTwo, this.applyMoveTwoBlack, [[1, 0], [2, 0]])];
         } else {
             this.possibleMoves = [new Move([-1, 0], this.canMove, this.applyMove, [[-1, 0]]),
-            new Move([-1, 1], this.canTake, this.applyMove, []),
-            new Move([-1, -1], this.canTake, this.applyMove, []),
+            new Move([-1, 1], this.canTake, this.maybePromoteWhite, []),
+            new Move([-1, -1], this.canTake, this.maybePromoteWhite, []),
             new Move([-1, 1], this.canEnPassant, this.applyEnPassant, []),
             new Move([-1, -1], this.canEnPassant, this.applyEnPassant, []),
             new Move([-2, 0], this.canMoveTwo, this.applyMoveTwoWhite, [[-1, 0], [-2, 0]])];
         }
     }
 
-    applyMoveTwoBlack = (targetSquare: Square): void => {
-        // Keep track of the pawns who just moved two
-        this.applyMove(targetSquare);
-        this.game.enPassant.targetSquare = this.board[targetSquare.x + 1][targetSquare.y];
-        this.game.enPassant.pawnSquare = this.board[targetSquare.x + 2][targetSquare.y];
+    maybePromoteBlack = (selectedQuare: Square, targetSquare: Square): void => {
+        this.applyMove(selectedQuare, targetSquare);
+        if (targetSquare.x === 7) {
+            targetSquare.piece = new Queen(this.side, this.game);
+        }
     }
 
-    applyMoveTwoWhite = (targetSquare: Square): void => {
+    maybePromoteWhite = (selectedQuare: Square, targetSquare: Square): void => {
+        this.applyMove(selectedQuare, targetSquare);
+        if (targetSquare.x === 0) {
+            targetSquare.piece = new Queen(this.side, this.game);
+        }
+    }
+
+    applyMoveTwoBlack = (selectedSquare: Square, targetSquare: Square): void => {
         // Keep track of the pawns who just moved two
-        this.applyMove(targetSquare);
+        this.applyMove(selectedSquare, targetSquare);
         this.game.enPassant.targetSquare = this.board[targetSquare.x - 1][targetSquare.y];
-        this.game.enPassant.pawnSquare = this.board[targetSquare.x - 2][targetSquare.y];
+        this.game.enPassant.pawnSquare = this.board[targetSquare.x][targetSquare.y];
     }
 
-    applyEnPassant = (targetSquare: Square): void => {
+    applyMoveTwoWhite = (selectedQuare: Square, targetSquare: Square): void => {
+        // Keep track of the pawns who just moved two
+        this.applyMove(selectedQuare, targetSquare);
+        this.game.enPassant.targetSquare = this.board[targetSquare.x + 1][targetSquare.y];
+        this.game.enPassant.pawnSquare = this.board[targetSquare.x][targetSquare.y];
+    }
+
+    applyEnPassant = (selectedQuare: Square, targetSquare: Square): void => {
         // Remove the pawn being passed
         this.game.removePiece(this.game.enPassant.pawnSquare);
-        this.applyMove(targetSquare);
+        this.applyMove(selectedQuare, targetSquare);
     }
 
     canMoveTwo = (targetSquare: Square): boolean => {

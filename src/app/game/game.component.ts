@@ -169,7 +169,6 @@ export class GameComponent implements OnInit {
             const validMove = this.selectedSquare.piece.getValidMove(this.selectedSquare, targetSquare);
             if (validMove && this.kingIsSafe(this.selectedSquare, targetSquare)) {
                 validMove.applyMove(this.selectedSquare, targetSquare);
-                this.movePieceToTarget(this.selectedSquare, targetSquare);
                 this.switchPlayer();
 
                 if (this.isCheck()) {

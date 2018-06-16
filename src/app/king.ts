@@ -23,15 +23,15 @@ export class King extends Piece {
         ];
     }
 
-    applyCastleLeft = (targetSquare: Square): void => {
+    applyCastleLeft = (selectedQuare: Square, targetSquare: Square): void => {
         // When the king moves move the castle as well
-        this.applyMove(targetSquare);
+        this.applyMove(selectedQuare, targetSquare);
         this.game.movePieceToTarget(this.board[targetSquare.x][0], this.board[targetSquare.x][3]);
     }
 
-    applyCastleRight = (targetSquare: Square): void => {
+    applyCastleRight = (selectedQuare: Square, targetSquare: Square): void => {
         // When the king moves move the castle as well
-        this.applyMove(targetSquare);
+        this.applyMove(selectedQuare, targetSquare);
         this.game.movePieceToTarget(this.board[targetSquare.x][7], this.board[targetSquare.x][5]);
     }
 
