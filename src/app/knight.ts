@@ -1,16 +1,17 @@
 import { Piece } from './piece';
+import { Move } from './move';
 
 export class Knight extends Piece {
     type = 'Knight';
-    possibleMoves: { move: number[], validate: Function, blockers: number[][] }[] = [
-        { move: [2, 1], validate: this.canMove, blockers: [] },
-        { move: [2, -1], validate: this.canMove, blockers: [] },
-        { move: [1, 2], validate: this.canMove, blockers: [] },
-        { move: [1, -2], validate: this.canMove, blockers: [] },
-        { move: [-2, 1], validate: this.canMove, blockers: [] },
-        { move: [-2, -1], validate: this.canMove, blockers: [] },
-        { move: [-1, 2], validate: this.canMove, blockers: [] },
-        { move: [-1, -2], validate: this.canMove, blockers: [] }
+    possibleMoves: Move[] = [
+        new Move([2, 1], this.canMove, this.applyMove, []),
+        new Move([2, -1], this.canMove, this.applyMove, []),
+        new Move([1, 2], this.canMove, this.applyMove, []),
+        new Move([1, -2], this.canMove, this.applyMove, []),
+        new Move([-2, 1], this.canMove, this.applyMove, []),
+        new Move([-2, -1], this.canMove, this.applyMove, []),
+        new Move([-1, 2], this.canMove, this.applyMove, []),
+        new Move([-1, -2], this.canMove, this.applyMove, [])
     ];
 
 }

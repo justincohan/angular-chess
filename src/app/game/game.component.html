@@ -4,7 +4,7 @@
 <div class="board-container center">
     <div class="board">
         <div *ngFor="let row of board" class="row">
-            <div *ngFor="let square of row" [ngClass]="{'gray': square.isGray, 'white': !square.isGray, 'square': true, 'selected': square.selected}" (click)="movePiece(square)">
+            <div *ngFor="let square of row" [ngClass]="{'gray': square.isGray, 'white': !square.isGray, 'square': true, 'selected': square === selectedSquare}" (click)="movePiece(square)">
                 <img class="piece" *ngIf="square.piece" src="assets/images/{{square.piece.side}}_{{square.piece.type.toLowerCase()}}.png">
             </div>
         </div>

@@ -11,7 +11,6 @@ import { Pawn } from '../pawn';
 import { Square } from '../square';
 
 import { GameService } from '../game.service';
-import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
 
 const PIECESETUP = [[Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook],
 [Pawn, Pawn, Pawn, Pawn, Pawn, Pawn, Pawn, Pawn],
@@ -31,6 +30,7 @@ const SIDE = [Side.BLACK, Side.BLACK, , , , , Side.WHITE, Side.WHITE];
 })
 export class GameComponent implements OnInit {
     board: Square[][] = [];
+    enPassant: { pawnSquare: Square, targetSquare: Square} = {pawnSquare: null, targetSquare: null};
     selectedSquare: Square;
     player: Side = Side.WHITE;
     message = 'Welcome';
@@ -40,7 +40,7 @@ export class GameComponent implements OnInit {
     constructor(private gameService: GameService) { }
 
     ngOnInit() {
-        // Initialize our game board
+        // Initialize our game board with squares and pieces
         let isGray = true;
         for (let i = 0; i < 8; i += 1) {
             const row: Square[] = [];
@@ -58,9 +58,9 @@ export class GameComponent implements OnInit {
         }
     }
 
-    findKingSquare(board: Square[][]): Square {
+    findKingSquare(): Square {
         // Find the king square for the current player
-        for (const row of board) {
+        for (const row of this.board) {
             for (const square of row) {
                 if (square.piece && square.piece.type === 'King' && square.piece.side === this.player) {
                     return square;
@@ -70,39 +70,42 @@ export class GameComponent implements OnInit {
     }
 
     savePieces(currentSquare: Square, targetSquare: Square): void {
+        //  Hold positions to be restored
         this.holdPieces = { targetSquarePiece: targetSquare.piece, currentSquarePiece: currentSquare.piece };
     }
 
     restorePieces(currentSquare: Square, targetSquare: Square): void {
+        // Restore original positions
         targetSquare.piece = this.holdPieces.targetSquarePiece;
         currentSquare.piece = this.holdPieces.currentSquarePiece;
     }
 
-    moveCurrentToTarget(currentSquare: Square, targetSquare: Square): void {
+    removePiece(targetSquare: Square): void {
+        // Remove this piece.  Used for pawn passing
+        targetSquare.piece = null;
+    }
+
+    movePieceToTarget(currentSquare: Square, targetSquare: Square): void {
+        // complete the move of a piece to the target square
         targetSquare.piece = currentSquare.piece;
         currentSquare.piece = null;
     }
 
-    validMove(currentSquare: Square, targetSquare: Square): boolean {
+    kingIsSafe(currentSquare: Square, targetSquare: Square): boolean {
         // Check if after this move is completed are any pieces able to take the king.  You should not be able to put yourself in check
         this.savePieces(currentSquare, targetSquare);
-        this.moveCurrentToTarget(currentSquare, targetSquare);
-        const kingSquare = this.findKingSquare(this.board);
-
-        if (this.isCheck(this.board)) {
-            this.restorePieces(currentSquare, targetSquare);
-            return false;
-        }
+        this.movePieceToTarget(currentSquare, targetSquare);
+        const kingIsInCheck = this.isCheck();
         this.restorePieces(currentSquare, targetSquare);
-        return true;
+        return !kingIsInCheck;
     }
 
-    isCheck(board: Square[][]): boolean {
-        // Is the king in check on the provided board
-        const kingSquare = this.findKingSquare(board);
-        for (const row of board) {
+    isCheck(): boolean {
+        // Is the king in check on the board
+        const kingSquare = this.findKingSquare();
+        for (const row of this.board) {
             for (const square of row) {
-                if (square.piece && square.piece.side !== this.player && square.piece.validMove(board, square, kingSquare)) {
+                if (square.piece && square.piece.side !== this.player && square.piece.getValidMove(square, kingSquare)) {
                     return true;
                 }
             }
@@ -111,12 +114,14 @@ export class GameComponent implements OnInit {
     }
 
     isCheckmate(): boolean {
+        // Is there any possible move where the king won't be in check
         for (const row of this.board) {
             for (const square of row) {
                 if (square.piece && square.piece.side === this.player) {
-                    const validMoves = square.piece.getValidMoves(this.board, square);
+                    const validMoves = square.piece.getValidTargetSquares(square);
                     for (const validMove of validMoves) {
-                        if (this.validMove(square, this.board[validMove[0]][validMove[1]])) {
+                        // Can this piece make a move that would stop the king from being in check?
+                        if (this.kingIsSafe(square, validMove)) {
                             return false;
                         }
                     }
@@ -126,31 +131,34 @@ export class GameComponent implements OnInit {
         return true;
     }
 
-    unselectTarget(): void {
-        if (this.selectedSquare) {
-            this.selectedSquare.unselect();
-            this.selectedSquare = null;
-        }
+    unselectSquare(): void {
+        // Unselect currently selected square
+        this.selectedSquare = null;
     }
 
-    selectTargetSquare(targetSquare: Square): void {
+    selectSquare(targetSquare: Square): void {
+        // Mark clicked square as selected if it is a piece for the current player
         if (targetSquare.piece && targetSquare.piece.side === this.player) {
-            this.unselectTarget();
-            targetSquare.select();
+            this.unselectSquare();
             this.selectedSquare = targetSquare;
         }
     }
 
+    switchPlayer(): void {
+        this.player = this.player === Side.WHITE ? Side.BLACK : Side.WHITE;
+        this.message = this.player + '\'s turn';
+    }
+
     movePiece(targetSquare: Square): void {
-        // Handle selecting a piece and moving it if the move is valid
-        if (this.selectedSquare) {
-            if (this.selectedSquare.piece.validMove(this.board, this.selectedSquare, targetSquare) &&
-                this.validMove(this.selectedSquare, targetSquare)) {
-                this.selectedSquare.piece.move(targetSquare);
-                this.moveCurrentToTarget(this.selectedSquare, targetSquare);
-                this.player = this.player === Side.WHITE ? Side.BLACK : Side.WHITE;
-                this.message = this.player + '\'s turn';
-                if (this.isCheck(this.board)) {
+        // Handle selecting a piece and moving it
+        if (this.selectedSquare) { // If a piece is selected then check if the target is a valid move
+            const validMove = this.selectedSquare.piece.getValidMove(this.selectedSquare, targetSquare);
+            if (validMove && this.kingIsSafe(this.selectedSquare, targetSquare)) {
+                validMove.applyMove(this.selectedSquare, targetSquare);
+                this.movePieceToTarget(this.selectedSquare, targetSquare);
+                this.switchPlayer();
+
+                if (this.isCheck()) {
                     if (this.isCheckmate()) {
                         this.message = this.player === Side.WHITE ? Side.BLACK : Side.WHITE + ' wins';
                     }
@@ -158,12 +166,14 @@ export class GameComponent implements OnInit {
                 } else {
                     this.inCheck = false;
                 }
-                this.unselectTarget();
+                this.unselectSquare();
             } else {
-                this.selectTargetSquare(targetSquare);
+                // Change piece to move
+                this.selectSquare(targetSquare);
             }
         } else {
-            this.selectTargetSquare(targetSquare);
+            // Select a piece to move
+            this.selectSquare(targetSquare);
         }
     }
 
