@@ -33,14 +33,14 @@ export class Pawn extends Piece {
     maybePromoteBlack = (selectedSquare: Square, targetSquare: Square): void => {
         this.applyMove(selectedSquare, targetSquare);
         if (targetSquare.x === 7) {
-            targetSquare.piece = new Queen(this.side, this.game);
+            this.game.promotingSquare = targetSquare;
         }
     }
 
     maybePromoteWhite = (selectedSquare: Square, targetSquare: Square): void => {
         this.applyMove(selectedSquare, targetSquare);
         if (targetSquare.x === 0) {
-            targetSquare.piece = new Queen(this.side, this.game);
+            this.game.promotingSquare = targetSquare;
         }
     }
 

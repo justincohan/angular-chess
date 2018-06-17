@@ -22,15 +22,6 @@ const PIECESETUP = [[Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook],
 [Pawn, Pawn, Pawn, Pawn, Pawn, Pawn, Pawn, Pawn],
 [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]];
 
-/*const PIECESETUP = [[ , , , Queen, King, , , ],
-[, , , , , , , ],
-[, , , , , , , ],
-[, , , , , , , ],
-[, , , , , , , ],
-[, , , , , , , ],
-[, , , , , , , ],
-[, , , Queen, King, , , ]];*/
-
 const SIDE = [Side.BLACK, Side.BLACK, , , , , Side.WHITE, Side.WHITE];
 
 @Component({
@@ -48,6 +39,7 @@ export class GameComponent implements OnInit {
     inCheck: boolean;
     AI: AI;
     holdPieces: { targetSquarePiece: Piece, currentSquarePiece: Piece };
+    promotingSquare: Square;
 
     ngOnInit() {
         // Initialize our game board with squares and pieces
@@ -78,6 +70,28 @@ export class GameComponent implements OnInit {
         }
     }
 
+    promote(piece): void {
+        this.promotingSquare.piece = new piece(this.promotingSquare.piece.side, this);
+        this.promotingSquare = null;
+        this.completeMove(null, null, null);
+    }
+
+    promoteQueen(): void {
+        this.promote(Queen);
+    }
+
+    promoteRook(): void {
+        this.promote(Rook);
+    }
+
+    promoteKnight(): void {
+        this.promote(Knight);
+    }
+
+    promoteBishop(): void {
+        this.promote(Bishop);
+    }
+
     resetGame(): void {
         // Reset board and everything else
         this.ngOnInit();
@@ -85,11 +99,9 @@ export class GameComponent implements OnInit {
 
     findKingSquare(): Square {
         // Find the king square for the current player
-        for (const row of this.board) {
-            for (const square of row) {
-                if (square.piece && square.piece.type === 'King' && square.piece.side === this.player) {
-                    return square;
-                }
+        for (const square of this.getSquaresForPlayer(this.player)) {
+            if (square.piece.type === 'King') {
+                return square;
             }
         }
     }
@@ -195,7 +207,12 @@ export class GameComponent implements OnInit {
 
     completeMove(validMove: Move, selectedSquare: Square, targetSquare: Square): void {
         // Move is valid go ahead and move pieces and perform game checks
-        validMove.applyMove(selectedSquare, targetSquare);
+        if (validMove) {
+            validMove.applyMove(selectedSquare, targetSquare);
+        }
+        if (this.promotingSquare) { // Will finish after promoting
+            return;
+        }
         this.switchPlayer();
 
         if (this.isCheck()) {
@@ -217,6 +234,9 @@ export class GameComponent implements OnInit {
 
     movePiece(targetSquare: Square): void {
         // Handle selecting a piece and moving it
+        if (this.promotingSquare) { // No selecting until promotion piece is chosen
+            return;
+        }
         if (this.selectedSquare) { // If a piece is selected then check if the target is a valid move
             const validMove = this.selectedSquare.piece.getValidMove(this.selectedSquare, targetSquare);
             if (validMove && this.kingIsSafe(this.selectedSquare, targetSquare)) {

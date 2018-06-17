@@ -15,8 +15,16 @@
         Reset Game
     </button>
 </div>
+<div class="board-container center" [ngClass]="{'disabled': !promotingSquare}">
+    <div class="board inline">
+        <img class="piece" (click)="promoteQueen()" src="assets/images/{{player}}_queen.png">
+        <img class="piece" (click)="promoteBishop()" src="assets/images/{{player}}_bishop.png">
+        <img class="piece" (click)="promoteKnight()" src="assets/images/{{player}}_knight.png">
+        <img class="piece" (click)="promoteRook()" src="assets/images/{{player}}_rook.png">
+    </div>
+</div>
 <div class="board-container center">
-    <div class="board">
+    <div class="board inline">
         <div *ngFor="let row of board" class="row">
             <div *ngFor="let square of row" [ngClass]="{'gray': square.isGray, 'white': !square.isGray, 'square': true, 'selected': square === selectedSquare}" (click)="movePiece(square)">
                 <img class="piece" *ngIf="square.piece" src="assets/images/{{square.piece.side}}_{{square.piece.type.toLowerCase()}}.png">

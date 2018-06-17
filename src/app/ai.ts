@@ -58,6 +58,9 @@ export class AI {
                 if (validMove && this.game.kingIsSafe(squares.selected, targetSquare)) {
                     this.game.selectedSquare = squares.selected;
                     this.game.completeMove(validMove, squares.selected, targetSquare);
+                    if (this.game.promotingSquare) {
+                        this.game.promoteQueen();
+                    }
                     return;
                 }
             }

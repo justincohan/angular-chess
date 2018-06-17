@@ -1,3 +1,7 @@
+.disabled {
+    visibility: hidden;
+}
+
 .center {
     text-align: center;
 }
@@ -8,6 +12,9 @@
 
 .board {
     outline: 10px gray solid;
+}
+
+.inline {
     display: inline-block;
 }
 
