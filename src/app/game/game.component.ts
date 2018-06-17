@@ -79,6 +79,7 @@ export class GameComponent implements OnInit {
     }
 
     resetGame(): void {
+        // Reset board and everything else
         this.ngOnInit();
     }
 
@@ -125,6 +126,7 @@ export class GameComponent implements OnInit {
     }
 
     getSquaresForPlayer(player: string) {
+        // Return all squares with this players pieces on it
         const squaresForPlayer = [];
         for (const row of this.board) {
             for (const square of row) {
@@ -181,15 +183,18 @@ export class GameComponent implements OnInit {
     }
 
     getOtherPlayer(): Side {
+        // Get the non active player
         return (this.player === Side.WHITE ? Side.BLACK : Side.WHITE);
     }
 
     switchPlayer(): void {
+        // Now the other players turn
         this.player = this.getOtherPlayer();
         this.message = this.player + '\'s turn';
     }
 
     completeMove(validMove: Move, selectedSquare: Square, targetSquare: Square): void {
+        // Move is valid go ahead and move pieces and perform game checks
         validMove.applyMove(selectedSquare, targetSquare);
         this.switchPlayer();
 
