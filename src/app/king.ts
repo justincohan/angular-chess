@@ -42,7 +42,8 @@ export class King extends Piece {
         }
         for (const blocker of blockers) {
             // Only check when the king is the selected piece.  Can the king safely castle?
-            if (this.game.selectedSquare.piece === this && !this.game.kingIsSafe(square, this.getSquare(square, blocker))) {
+            if (this.game.selectedSquare && this.game.selectedSquare.piece === this &&
+                !this.game.kingIsSafe(square, this.getSquare(square, blocker))) {
                 return true;
             }
         }

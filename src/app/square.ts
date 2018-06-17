@@ -13,13 +13,4 @@ export class Square {
     this.x = x;
     this.y = y;
   }
-
-  select(): void {
-    this.selected = true;
-  }
-
-  unselect(): void {
-    this.selected = false;
-  }
-
 }

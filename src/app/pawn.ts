@@ -12,14 +12,16 @@ export class Pawn extends Piece {
     constructor(side: string, game: GameComponent) {
         super(side, game);
         if (this.side === Side.BLACK) {
-            this.possibleMoves = [new Move([1, 0], this.canMove, this.applyMove, [[1, 0]]),
+            this.possibleMoves = [
+            new Move([1, 0], this.canMove, this.maybePromoteBlack, [[1, 0]]),
             new Move([1, 1], this.canTake, this.maybePromoteBlack, []),
             new Move([1, -1], this.canTake, this.maybePromoteBlack, []),
             new Move([1, 1], this.canEnPassant, this.applyEnPassant, []),
             new Move([1, -1], this.canEnPassant, this.applyEnPassant, []),
             new Move([2, 0], this.canMoveTwo, this.applyMoveTwoBlack, [[1, 0], [2, 0]])];
         } else {
-            this.possibleMoves = [new Move([-1, 0], this.canMove, this.applyMove, [[-1, 0]]),
+            this.possibleMoves = [
+            new Move([-1, 0], this.canMove, this.maybePromoteWhite, [[-1, 0]]),
             new Move([-1, 1], this.canTake, this.maybePromoteWhite, []),
             new Move([-1, -1], this.canTake, this.maybePromoteWhite, []),
             new Move([-1, 1], this.canEnPassant, this.applyEnPassant, []),
@@ -28,15 +30,15 @@ export class Pawn extends Piece {
         }
     }
 
-    maybePromoteBlack = (selectedQuare: Square, targetSquare: Square): void => {
-        this.applyMove(selectedQuare, targetSquare);
+    maybePromoteBlack = (selectedSquare: Square, targetSquare: Square): void => {
+        this.applyMove(selectedSquare, targetSquare);
         if (targetSquare.x === 7) {
             targetSquare.piece = new Queen(this.side, this.game);
         }
     }
 
-    maybePromoteWhite = (selectedQuare: Square, targetSquare: Square): void => {
-        this.applyMove(selectedQuare, targetSquare);
+    maybePromoteWhite = (selectedSquare: Square, targetSquare: Square): void => {
+        this.applyMove(selectedSquare, targetSquare);
         if (targetSquare.x === 0) {
             targetSquare.piece = new Queen(this.side, this.game);
         }

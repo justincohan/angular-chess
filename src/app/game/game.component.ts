@@ -10,7 +10,8 @@ import { King } from '../king';
 import { Pawn } from '../pawn';
 import { Square } from '../square';
 
-import { GameService } from '../game.service';
+import { Move } from '../move';
+import { AI } from '../ai';
 
 const PIECESETUP = [[Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook],
 [Pawn, Pawn, Pawn, Pawn, Pawn, Pawn, Pawn, Pawn],
@@ -38,18 +39,28 @@ const SIDE = [Side.BLACK, Side.BLACK, , , , , Side.WHITE, Side.WHITE];
     styleUrls: ['./game.component.css']
 })
 export class GameComponent implements OnInit {
-    board: Square[][] = [];
-    enPassant: { pawnSquare: Square, targetSquare: Square} = {pawnSquare: null, targetSquare: null};
+    board: Square[][];
+    enPassant: { pawnSquare: Square, targetSquare: Square};
     selectedSquare: Square;
-    player: Side = Side.WHITE;
-    message = 'Welcome';
-    inCheck = false;
+    player: Side;
+    message: string;
+    gameOver: boolean;
+    inCheck: boolean;
+    AI: AI;
     holdPieces: { targetSquarePiece: Piece, currentSquarePiece: Piece };
-
-    constructor(private gameService: GameService) { }
 
     ngOnInit() {
         // Initialize our game board with squares and pieces
+        this.board = [];
+        this.enPassant = {pawnSquare: null, targetSquare: null};
+        this.selectedSquare = null;
+        this.player = Side.WHITE;
+        this.message = 'Welcome';
+        this.gameOver = false;
+        this.inCheck = false;
+        this.holdPieces = null;
+        this.AI = new AI(this, false, false);
+
         let isGray = true;
         for (let i = 0; i < 8; i += 1) {
             const row: Square[] = [];
@@ -65,6 +76,10 @@ export class GameComponent implements OnInit {
             }
             this.board.push(row);
         }
+    }
+
+    resetGame(): void {
+        this.ngOnInit();
     }
 
     findKingSquare(): Square {
@@ -109,14 +124,25 @@ export class GameComponent implements OnInit {
         return !kingIsInCheck;
     }
 
+    getSquaresForPlayer(player: string) {
+        const squaresForPlayer = [];
+        for (const row of this.board) {
+            for (const square of row) {
+                if (square.piece && square.piece.side === player) {
+                    squaresForPlayer.push(square);
+                }
+            }
+        }
+        return squaresForPlayer;
+    }
+
     isCheck(): boolean {
         // Is the king in check on the board
         const kingSquare = this.findKingSquare();
-        for (const row of this.board) {
-            for (const square of row) {
-                if (square.piece && square.piece.side !== this.player && square.piece.getValidMove(square, kingSquare)) {
-                    return true;
-                }
+        for (const square of this.getSquaresForPlayer(this.getOtherPlayer())) {
+            // Could this piece attack the king square
+            if (square.piece.getValidMove(square, kingSquare)) {
+                return true;
             }
         }
         return false;
@@ -124,16 +150,12 @@ export class GameComponent implements OnInit {
 
     isCheckmate(): boolean {
         // Is there any possible move where the king won't be in check
-        for (const row of this.board) {
-            for (const square of row) {
-                if (square.piece && square.piece.side === this.player) {
-                    const validMoves = square.piece.getValidTargetSquares(square);
-                    for (const validMove of validMoves) {
-                        // Can this piece make a move that would stop the king from being in check?
-                        if (this.kingIsSafe(square, validMove)) {
-                            return false;
-                        }
-                    }
+        for (const square of this.getSquaresForPlayer(this.player)) {
+            const validMoves = square.piece.getValidTargetSquares(square);
+            for (const validMove of validMoves) {
+                // Can this piece make a move that would stop the king from being in check?
+                if (this.kingIsSafe(square, validMove)) {
+                    return false;
                 }
             }
         }
@@ -158,9 +180,34 @@ export class GameComponent implements OnInit {
         }
     }
 
+    getOtherPlayer(): Side {
+        return (this.player === Side.WHITE ? Side.BLACK : Side.WHITE);
+    }
+
     switchPlayer(): void {
-        this.player = this.player === Side.WHITE ? Side.BLACK : Side.WHITE;
+        this.player = this.getOtherPlayer();
         this.message = this.player + '\'s turn';
+    }
+
+    completeMove(validMove: Move, selectedSquare: Square, targetSquare: Square): void {
+        validMove.applyMove(selectedSquare, targetSquare);
+        this.switchPlayer();
+
+        if (this.isCheck()) {
+            if (this.isCheckmate()) {
+                this.message = this.getOtherPlayer() + ' wins';
+                this.gameOver = true;
+            }
+            this.inCheck = true;
+        } else {
+            if (this.isStalemate()) {
+                this.message = 'Stalemate';
+                this.gameOver = true;
+            }
+            this.inCheck = false;
+        }
+        this.unselectSquare();
+        this.AI.checkAIMoves();
     }
 
     movePiece(targetSquare: Square): void {
@@ -168,21 +215,7 @@ export class GameComponent implements OnInit {
         if (this.selectedSquare) { // If a piece is selected then check if the target is a valid move
             const validMove = this.selectedSquare.piece.getValidMove(this.selectedSquare, targetSquare);
             if (validMove && this.kingIsSafe(this.selectedSquare, targetSquare)) {
-                validMove.applyMove(this.selectedSquare, targetSquare);
-                this.switchPlayer();
-
-                if (this.isCheck()) {
-                    if (this.isCheckmate()) {
-                        this.message = this.player === Side.WHITE ? Side.BLACK : Side.WHITE + ' wins';
-                    }
-                    this.inCheck = true;
-                } else {
-                    if (this.isStalemate()) {
-                        this.message = 'Stalemate';
-                    }
-                    this.inCheck = false;
-                }
-                this.unselectSquare();
+                this.completeMove(validMove, this.selectedSquare, targetSquare);
             } else {
                 // Change piece to move
                 this.selectSquare(targetSquare);
